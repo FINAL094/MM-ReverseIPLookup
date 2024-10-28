@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #required Libs
-#pip3 install socket requests time random beautifulsoup4
+#pip3 install requests beautifulsoup4
+#Run the tool
 #python3 MMV1.py
 
 import socket, requests, time, random
