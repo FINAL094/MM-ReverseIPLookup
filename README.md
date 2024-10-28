@@ -1,5 +1,5 @@
 # Main features :boom: 
--  Perform a reverse IP lookup to find all A records associated with an IP address.
+-  Perform a reverse Domain, and IP lookup to find all A records associated with an IP address.
 -  Using Free Multiple sources ('YouGetSignal', 'HackerTarget', 'Shodan', 'DNSDumpster', 'Robtex').
 -  Randomly generate user agents pet the session.
 -  Resolve the IP address of the Domain.
