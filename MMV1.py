@@ -63,6 +63,7 @@ class ReverseIPLookup:
         | 3. Shodan              (-> No API require)                    |
         | 4. DNSDumpster         (-> No API require)                    |
         | 5. Robtex              (-> No API require)                    |
+        | 6. Threatminer         (-> No API require)                    |
         =================================================================
         """
         print(banner)
@@ -73,7 +74,7 @@ class ReverseIPLookup:
         headers['Referer'] = random.choice(self.referers)
         headers['X-Forwarded-For'] = f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}"
         return headers
-#Requests
+#Request
     def _make_request(self, url: str, method: str = 'GET', data: dict = None, headers: dict = None, delay: float = 1.0) -> requests.Response:
         time.sleep(delay + random.uniform(0.1, 0.5))
         try:
@@ -94,7 +95,9 @@ class ReverseIPLookup:
         response = self._make_request(url, method='POST', data=data)
         result = response.json()
         domains = {domain[0] for domain in result['domainArray']} if result.get('domainArray') else set()
-        print(f"[YouGetSignal] Found {len(domains)} domains.")
+        print(f"[YouGetSignal] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
         return domains
 #query_hackertarget
     def query_hackertarget(self, ip_address: str):
@@ -102,7 +105,9 @@ class ReverseIPLookup:
         url = f"https://api.hackertarget.com/reverseiplookup/?q={ip_address}"
         response = self._make_request(url)
         domains = {domain.strip() for domain in response.text.split('\n') if domain.strip() and not domain.startswith('error') and '.' in domain}
-        print(f"[HackerTarget] Found {len(domains)} domains.")
+        print(f"[HackerTarget] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
         return domains
 #query_shodan
     def query_shodan(self, ip_address: str):
@@ -111,8 +116,28 @@ class ReverseIPLookup:
         response = self._make_request(url)
         soup = BeautifulSoup(response.text, 'html.parser')
         table = soup.find('table')
-        domains = {row.find_all('td')[0].text.strip() for row in table.find_all('tr')[1:]} if table else set()
-        print(f"[Shodan] Found {len(domains)} domains.")
+        domains = {row.find_all('td')[0].text.strip() for row in table.find_all('tr')[1:] if '.' in row.find_all('td')[0].text} if table else set()
+        print(f"[Shodan] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
+        return domains
+#query_threatminer
+    def query_threatminer(self, ip_address: str):
+        print(f"Querying ThreatMiner for IP {ip_address}...")
+        url = f"https://api.threatminer.org/v2/host.php?q={ip_address}&rt=5"
+        response = self._make_request(url)
+        
+        # Parse the response to extract domains
+        data = response.json()
+        domains = {item["domain"] for item in data.get("results", []) if "domain" in item}
+        
+        if domains:
+            print(f"[ThreatMiner] Found {len(domains)} domains:")
+            for domain in domains:
+                print(f" - {domain}")
+        else:
+            print("[ThreatMiner] No domains found for this IP.")
+        
         return domains
 #query_dnsdumpster
     def query_dnsdumpster(self, domain: str):
@@ -126,18 +151,30 @@ class ReverseIPLookup:
         soup = BeautifulSoup(response.text, 'html.parser')
         tables = soup.find_all('table', {'class': 'table'})
         domains = {cols[0].text.strip() for table in tables for row in table.find_all('tr') for cols in row.find_all('td')} if tables else set()
-        print(f"[DNSDumpster] Found {len(domains)} domains.")
+        print(f"[DNSDumpster] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
         return domains
 #query_robtex
     def query_robtex(self, ip_address: str):
         print(f"Querying Robtex for IP {ip_address}...")
         url = f"https://freeapi.robtex.com/ipquery/{ip_address}"
-        response = self._make_request(url, delay=2.0)  # Increased timeout to avoid timeout errors
+        response = self._make_request(url, delay=2.0)
         data = response.json()
         domains = {entry['o'] for entry in data['pas'] if entry.get('o')} if 'pas' in data else set()
-        print(f"[Robtex] Found {len(domains)} domains.")
+        print(f"[Robtex] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
         return domains
-#Resolve Domain to IP
+# Parse the table to find domain names
+        table = soup.find('table', {'border': '1'})
+        domains = {row.find_all('td')[0].text.strip() for row in table.find_all('tr')[1:]} if table else set()
+        
+        print(f"[ViewDNS.info] Found {len(domains)} domains:")
+        for domain in domains:
+            print(f" - {domain}")
+        return domains 
+#get_ip_from_domain    
     def get_ip_from_domain(self, domain: str):
         try:
             ip_address = socket.gethostbyname(domain)
@@ -146,7 +183,7 @@ class ReverseIPLookup:
         except socket.gaierror:
             print(f"Could not resolve {domain}")
             return None
-#Save function to ask the user to save the output
+#save_results
     def save_results(self, domains: set, base_filename: str):
         if not domains:
             print("No domains found to save.")
@@ -158,17 +195,18 @@ class ReverseIPLookup:
         filename = f"{base_filename}_{timestamp}.txt"
         try:
             with open(filename, "w", encoding='utf-8') as file:
-                file.write('\n'.join(sorted(domains)))  # Sort and write domains
+                file.write('\n'.join(sorted(domains)))
             print(f"Results saved to {filename}")
         except IOError as e:
             print(f"Error saving results: {e}")
-#Core ^_^
+#Core
     def run(self, domain: str):
         ip_address = self.get_ip_from_domain(domain)
         if not ip_address:
             return
         all_domains = set()
-        services = [self.query_yougetsignal, self.query_hackertarget, self.query_shodan, self.query_dnsdumpster, self.query_robtex]
+        # Add query_threatminer to the services list
+        services = [self.query_yougetsignal, self.query_hackertarget, self.query_shodan, self.query_dnsdumpster, self.query_robtex, self.query_threatminer]
         for service in services:
             try:
                 all_domains.update(service(ip_address))
@@ -178,7 +216,7 @@ class ReverseIPLookup:
         print(f"Total unique domains found: {len(all_domains)}")
         if all_domains:
             self.save_results(all_domains, f"reverse_ip_{domain}")
-
+#Main
 def main():
     tool = ReverseIPLookup()
     tool.print_banner()
