@@ -10,11 +10,11 @@
 # Installation :hammer:
 
 ```bash
-$ git clone https://github.com/FINAL094/MM-ReverseIPLookup
-$ cd MM-ReverseIPLookup
-$ pip3 install socket requests time random beautifulsoup4
-$ chmod +x MMV1.py
-$ python3 MMV1.py
+ git clone https://github.com/FINAL094/MM-ReverseIPLookup
+ cd MM-ReverseIPLookup
+ pip3 install socket requests time random beautifulsoup4
+ chmod +x MMV1.py
+ python3 MMV1.py
 ```
 -------------------------------------
 
