@@ -43,7 +43,7 @@ class ReverseIPLookup:
             {'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'en-GB,en;q=0.9', 'Connection': 'keep-alive'},
             {'Accept': '*/*', 'Accept-Language': 'en-US,en;q=0.9', 'Connection': 'keep-alive'}
         ]
-        self.services = ['YouGetSignal', 'HackerTarget', 'Shodan', 'DNSDumpster', 'Robtex']
+        self.services = ['YouGetSignal', 'HackerTarget', 'Shodan', 'DNSDumpster', 'Robtex', 'ThreatMiner']
 #Banner
     def print_banner(self):
         banner = """
@@ -63,7 +63,7 @@ class ReverseIPLookup:
         | 3. Shodan              (-> No API require)                    |
         | 4. DNSDumpster         (-> No API require)                    |
         | 5. Robtex              (-> No API require)                    |
-        | 6. Threatminer         (-> No API require)                    |
+        | 6. ThreatMiner         (-> No API require)                    |
         =================================================================
         """
         print(banner)
